@@ -171,7 +171,20 @@ AGENT ACTIONS:
 
 QUESTIONS ASKED IN CHAT (answers recorded when received):
   a. GitHub repo URL (or approve installing/authenticating gh CLI)?
+     ANSWER: https://github.com/clandaith/JavaEval
   b. For PROCESS.md, which Troy will write: roughly how long did this take?
   c. What (if anything) did you write or fix by hand?
+
+--------------------------------------------------------------------------------
+ENTRY 6 — GitHub push
+--------------------------------------------------------------------------------
+
+- HTTPS remote failed (no credential helper prompts allowed) — switched to
+  SSH remote git@github.com:clandaith/JavaEval.git; ssh auth as clandaith OK.
+- Remote had an auto-created README stub — `git pull --rebase` + resolved
+  README.md conflict in favor of our file (remote stub was 1 line).
+- Pushed main: 10 commits total (9 [ai]-tagged + remote "first commit").
+- Repo contents: full app, tests (32 green), README.md, global_rules.md
+  (AI setup file), AI-Interactions.txt, .gitignore. PRD PDF left untracked.
 
 
