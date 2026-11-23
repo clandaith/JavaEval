@@ -47,6 +47,8 @@ class BureauFailurePendingIT {
         assertNotNull(application.getDecisionReason());
         // The record is persisted — a retry is possible later.
         assertNotNull(application.getId());
+        assertNotNull(application.getCreatedAt());
+        assertNotNull(application.getUpdatedAt());
         assertTrue(repository.findByIdempotencyKey(form.getIdempotencyKey()).isPresent());
         // The paid call was attempted exactly once.
         assertEquals(1, registry.getCallCount());

@@ -8,6 +8,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Required test #1: decision rules return the right result at the boundaries
@@ -51,6 +52,6 @@ class DecisionServiceTest {
     void decisionIncludesReason() {
         var decision = service.decide(700, new BigDecimal("40000"));
         assertEquals(ApplicationStatus.APPROVED, decision.status());
-        assertEquals(true, decision.reason() != null && decision.reason().contains("700"));
+        assertTrue(decision.reason() != null && decision.reason().contains("700"));
     }
 }
