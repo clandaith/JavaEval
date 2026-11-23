@@ -1,0 +1,138 @@
+================================================================================
+AI INTERACTION LOG
+Session: 2026-11-23
+Workspace: /Users/troyd/code/JavaClicklease
+================================================================================
+
+--------------------------------------------------------------------------------
+ENTRY 1 — Setup: interaction logging
+--------------------------------------------------------------------------------
+
+USER REQUEST (verbatim):
+"Ok HAL, we're working on a tech test.  They are wanting to evalate my coding
+and AI skills.  I want you to write all of our chat in a file called
+AI-Interactions.txt.  You need to write out everything that i ask you to do,
+and everything that you do.  Do you understand this?  Prompt me with any
+questions."
+
+AGENT ACTIONS:
+- Asked clarifying questions (one at a time, per standing rules):
+    Q1: File location and update cadence?
+    A1: Workspace root, running log — append every request + action after
+        each exchange.
+    Q2: Level of detail per entry?
+    A2: Request verbatim + action summary (files touched, commands run,
+        results).
+    Q3: Include this setup conversation in the log?
+    A3: Yes, include setup conversation.
+- Stated plan and received explicit approval ("I approve").
+- Created /Users/troyd/code/JavaClicklease/AI-Interactions.txt with this log.
+- Confirmed: file is uncommitted; will not be committed unless instructed.
+
+STANDING RULES ACKNOWLEDGED (from user config):
+- Address user as "His Excellency, Troy"; agent is "HAL".
+- Act as senior Java developer.
+- After every code change: create unit + integration tests, run them, ensure
+  they pass.
+- Code changes include logger lines in the format:
+  logger.info("DEBUG MSG: {message}");
+- Ask clarifying questions one at a time; never assume; get approval before
+  acting.
+
+--------------------------------------------------------------------------------
+ENTRY 2 — Interview: tech test requirements + build plan
+--------------------------------------------------------------------------------
+
+USER REQUEST (verbatim):
+"Ok.  Lets create the app.  You are to create a Java app.  This will use
+Springboot and the latest Java version.  There is a front end and back end.
+The frontend will be created with Thymeleaf.  We need a back end DB.  This
+will use SQLite.  I want you to look at the Clicklease Take-Home Mini Lease
+Application (PRD).pdf file.  This has the requirements... Interview me until
+you have enough information to start working."
+
+AGENT ACTIONS:
+- Extracted PRD text from PDF via macOS PDFKit (osascript/JXA) since no
+  pdftotext/pypdf was installed. Read all 5 pages; identified requirements:
+  form w/ validation + loading + result, mocked credit bureau (deterministic
+  score, 200ms-3s delay, ~20% failure, call counting), decision rules,
+  SQLite persistence w/ list/detail/retry, EIN masking, 3 required tests.
+- Checked toolchain: Java 25 via Homebrew (Maven 3.9.15 uses it), Java 17 is
+  shell default, no Gradle. Confirmed Spring Boot 4.2.0 is latest release on
+  Maven Central.
+- Interviewed user (one question at a time). Decisions:
+    1. Stack: Maven + Java 25 + Spring Boot 4.x + Thymeleaf + Spring Data JPA
+       + SQLite. Package com.clicklease.app.
+    2. Bureau mock: HTTP endpoint inside the same app, called via RestClient
+       with a 2s timeout.
+    3. Idempotency: hidden UUID per form render + unique DB column.
+    4. Git: init repo, small [ai]-tagged commits at each milestone.
+    5. PROCESS.md: agent drafts from this log; user edits.
+- Presented full plan; user approved ("Yes").
+
+PLAN SUMMARY:
+- Entity LeaseApplication (id, idempotencyKey unique, fields, status,
+  creditScore, decisionReason, timestamps)
+- GET /mock/bureau/score endpoint: deterministic score 300-850 from taxId
+  hash, 200ms-3s delay, ~20% failure, call counter + cost ($1.50)
+- BureauClient via RestClient, 2s timeout -> Pending on failure
+- DecisionService pure function; ApplicationService orchestrates
+- Thymeleaf pages: apply form, applications list (filterable), detail w/
+  Retry on Pending. EIN masked **-***1234 everywhere.
+- SQLite at ./data/lease.db; port 8080
+- Tests: decision boundaries, bureau-fail->Pending, duplicate submit->1 call
+
+--------------------------------------------------------------------------------
+ENTRY 3 — Scaffold + full implementation
+--------------------------------------------------------------------------------
+
+USER ACTION: Approved the plan ("Yes").
+
+AGENT ACTIONS:
+- git init (main). Created pom.xml (Spring Boot 4.2.0 parent, Java 25,
+  web/thymeleaf/data-jpa/validation starters, sqlite-jdbc 3.50.3.0,
+  hibernate-community-dialects, test starters), .gitignore,
+  application.properties (SQLite at ./data/lease.db, bureau.* knobs).
+- Wrote 15 main classes: ClickleaseApplication, domain (LeaseApplication
+  entity, ApplicationStatus enum), repository, util.TaxIdMasker,
+  bureau (MockCreditBureauController, BureauClient w/ 2s RestClient timeout,
+  BureauCallRegistry, BureauUnavailableException), service (DecisionService,
+  ApplicationService), web (ApplicationForm w/ validation, ApplicationController)
+  and 3 Thymeleaf templates (apply, applications, application-detail).
+- Wrote 8 test files: DecisionServiceTest (18 boundary cases),
+  BureauFailurePendingIT, BureauTimeoutPendingIT, IdempotentSubmissionIT,
+  TaxIdMaskerTest, MockCreditBureauControllerTest, ApplicationFormWebIT,
+  TestFixtures.
+
+Bugs found & fixed during bring-up (all verified, not assumed):
+1. Boot 4 package moves: WebServerApplicationContext -> web.server.context;
+   TestRestTemplate -> spring-boot-resttestclient (+ spring-boot-restclient
+   dep + @AutoConfigureTestRestTemplate).
+2. Surefire skips *IT classes by default -> added includes so `mvn test`
+   runs everything (initially only 23/28 tests ran).
+3. GenerationType.IDENTITY emits broken DDL on Hibernate 7 SQLiteDialect
+   (untyped `id` column -> not a rowid alias -> stored id NULL ->
+   keyed lookups discarded). Proven via bind/extract tracing + JDBC
+   cross-check; fixed with GenerationType.AUTO.
+4. Thymeleaf `application` is a reserved implicit object — detail model
+   attribute was shadowed; renamed to `app` (first tried T() enum compare,
+   which did not fix it — wrong diagnosis, corrected on investigation).
+
+RESULT: mvn test -> 28 tests, 0 failures. Live curl smoke test confirmed:
+idempotent double-submit (1 bureau call/$1.50), deterministic scores,
+~20% PENDING fallbacks, retry -> new score/status, masked EIN **-***6789,
+status filter, persistence across restart.
+
+--------------------------------------------------------------------------------
+ENTRY 4 — Docs + submission prep
+--------------------------------------------------------------------------------
+
+AGENT ACTIONS:
+- Wrote README.md (run app + tests in one command each) and PROCESS.md
+  draft (with marked sections for Troy to fill: hand fixes, time spent).
+- Removed smoke-test rows (data/ is gitignored; DB recreated at runtime).
+
+PENDING FOR TROY: GitHub repo creation/push, PROCESS.md personal sections,
+2-5 min demo video (show app incl. a bureau failure + retry).
+
+
