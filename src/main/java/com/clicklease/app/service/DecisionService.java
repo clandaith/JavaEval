@@ -35,6 +35,9 @@ public class DecisionService {
     }
 
     public Decision pending(String detail) {
-        return new Decision(ApplicationStatus.PENDING, "Credit bureau unavailable: " + detail);
+        logger.info("DEBUG MSG: Marking application PENDING (bureau detail: {})", detail);
+        return new Decision(ApplicationStatus.PENDING,
+                "Decision pending — the credit bureau could not be reached. "
+                        + "Use Retry to submit the decision again.");
     }
 }

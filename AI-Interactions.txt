@@ -190,4 +190,30 @@ ENTRY 6 — GitHub push
 - Repo contents: full app, tests (32 green), README.md, global_rules.md
   (AI setup file), AI-Interactions.txt, .gitignore. PRD PDF left untracked.
 
+--------------------------------------------------------------------------------
+ENTRY 7 — Manual test session + human-readable pending message
+--------------------------------------------------------------------------------
+
+USER REQUEST (verbatim):
+"Start the app and let me test it." — app started, browser preview opened.
+
+USER REPORT (verbatim):
+'I just got a message on the screen that said: "Credit bureau unavailable:
+Credit bureau call failed: 503 : "{...}" — Make this human readable. Also
+double check your code and logs to verify that the mock service is up and
+running properly."'
+
+AGENT ACTIONS:
+- Fixed DecisionService.pending(): user-facing reason is now
+  "Decision pending — the credit bureau could not be reached. Use Retry to
+  submit the decision again." Technical vendor detail stays in logs only.
+- Added DecisionServiceTest.pendingReasonIsHumanReadable — asserts no
+  status codes/braces/exception text leak into the UI message.
+- Verified mock bureau live: deterministic score per EIN (12-3456789->775),
+  delays 1.0–2.9s inside the 200ms–3s SLA, ~20% 503s, call counter
+  (8 calls / $12.00), masked EINs in logs. Mock is healthy — the 503 Troy
+  saw was the intended ~20% simulated vendor failure, and PENDING + Retry
+  is the designed UX.
+- mvn test -> 33 tests, 0 failures. App restarted with the fix.
+
 

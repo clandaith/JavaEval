@@ -54,4 +54,17 @@ class DecisionServiceTest {
         assertEquals(ApplicationStatus.APPROVED, decision.status());
         assertTrue(decision.reason() != null && decision.reason().contains("700"));
     }
+
+    @Test
+    void pendingReasonIsHumanReadable() {
+        var decision = service.pending("Credit bureau call failed: 503 : {\"error\":\"x\"}");
+        assertEquals(ApplicationStatus.PENDING, decision.status());
+        // Reason shown to the user must not leak technical vendor detail.
+        for (String noise : new String[]{"503", "{", "}", "error", "Exception"}) {
+            assertTrue(!decision.reason().contains(noise),
+                    "reason leaks technical detail: " + noise);
+        }
+        assertTrue(decision.reason().contains("Retry"),
+                "reason should tell the user how to proceed");
+    }
 }
