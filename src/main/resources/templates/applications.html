@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clicklease — Applications</title>
+    <style>
+        body { font-family: -apple-system, "Segoe UI", sans-serif; margin: 0; background: #f4f6f8; color: #222; }
+        header { background: #14335c; color: #fff; padding: 14px 28px; display: flex; justify-content: space-between; align-items: center; }
+        header a { color: #cfe0ff; }
+        main { max-width: 860px; margin: 32px auto; background: #fff; padding: 28px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+        table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e3e8ee; }
+        th { font-size: 13px; text-transform: uppercase; color: #5a6675; }
+        a { color: #14335c; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 700; }
+        .APPROVED { background: #dcf5e3; color: #17693a; }
+        .DECLINED { background: #fbe1df; color: #9c2218; }
+        .PENDING  { background: #fff3cd; color: #8a6400; }
+        .filters { margin-top: 18px; }
+        .filters a { margin-right: 10px; padding: 5px 12px; border-radius: 14px; border: 1px solid #b9c2cc; text-decoration: none; font-size: 14px; }
+        .filters a.active { background: #14335c; color: #fff; border-color: #14335c; }
+        .stats { margin-top: 24px; font-size: 14px; color: #5a6675; }
+        .empty { margin-top: 24px; color: #5a6675; }
+    </style>
+</head>
+<body>
+<header>
+    <strong>Clicklease — Mini Lease Application</strong>
+    <a href="/">New application</a>
+</header>
+<main>
+    <h1>Applications</h1>
+
+    <div class="filters">
+        <a th:href="@{/applications}" th:classappend="${selectedStatus == null} ? 'active'">All</a>
+        <a th:each="s : ${statuses}"
+           th:href="@{/applications(status=${s})}"
+           th:classappend="${selectedStatus == s} ? 'active'"
+           th:text="${s}">STATUS</a>
+    </div>
+
+    <p class="empty" th:if="${#lists.isEmpty(applications)}">No applications yet.</p>
+
+    <table th:unless="${#lists.isEmpty(applications)}">
+        <thead>
+        <tr>
+            <th>Business</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Date</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="app : ${applications}">
+            <td><a th:href="@{/applications/{id}(id=${app.id})}" th:text="${app.businessName}">Biz</a></td>
+            <td th:text="${'$' + #numbers.formatDecimal(app.amount, 1, 2)}">$0.00</td>
+            <td><span class="badge" th:classappend="${app.status}" th:text="${app.status}">STATUS</span></td>
+            <td th:text="${#temporals.format(app.createdAt, 'yyyy-MM-dd HH:mm')}">date</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p class="stats">
+        Credit bureau calls so far: <strong th:text="${bureauStats.callCount}">0</strong>
+        — total vendor cost: <strong th:text="${'$' + #numbers.formatDecimal(bureauStats.totalCost, 1, 2)}">$0.00</strong>
+    </p>
+</main>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clicklease — Application detail</title>
+    <style>
+        body { font-family: -apple-system, "Segoe UI", sans-serif; margin: 0; background: #f4f6f8; color: #222; }
+        header { background: #14335c; color: #fff; padding: 14px 28px; display: flex; justify-content: space-between; align-items: center; }
+        header a { color: #cfe0ff; }
+        main { max-width: 620px; margin: 32px auto; background: #fff; padding: 28px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+        dl { display: grid; grid-template-columns: 200px 1fr; row-gap: 10px; }
+        dt { font-weight: 700; color: #5a6675; }
+        dd { margin: 0; }
+        .badge { display: inline-block; padding: 5px 14px; border-radius: 14px; font-weight: 700; }
+        .APPROVED { background: #dcf5e3; color: #17693a; }
+        .DECLINED { background: #fbe1df; color: #9c2218; }
+        .PENDING  { background: #fff3cd; color: #8a6400; }
+        .result { margin: 18px 0; padding: 16px; border: 1px solid #e3e8ee; border-radius: 6px; }
+        .toast { padding: 10px 14px; background: #dcf5e3; border-radius: 6px; color: #17693a; font-weight: 600; }
+        button { margin-top: 20px; padding: 11px 22px; font-size: 15px; font-weight: 600; color: #fff; background: #14335c; border: 0; border-radius: 5px; cursor: pointer; }
+        #loading { display: none; margin-top: 12px; color: #14335c; font-weight: 600; }
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 3px solid #cfd8e6; border-top-color: #14335c; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -3px; margin-right: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+<header>
+    <strong>Clicklease — Mini Lease Application</strong>
+    <a href="/applications">All applications</a>
+</header>
+<main>
+    <p class="toast" th:if="${justSubmitted}">Application submitted — result below.</p>
+    <h1 th:text="${app.businessName}">Business</h1>
+
+    <div class="result">
+        <span class="badge" th:classappend="${app.status}" th:text="${app.status}">STATUS</span>
+        <p th:if="${app.decisionReason != null}" th:text="${app.decisionReason}">reason</p>
+        <p th:if="${app.creditScore != null}">
+            Credit score: <strong th:text="${app.creditScore}">0</strong>
+        </p>
+    </div>
+
+    <dl>
+        <dt>Owner</dt><dd th:text="${app.ownerName}">-</dd>
+        <dt>Email</dt><dd th:text="${app.email}">-</dd>
+        <dt>Tax ID (EIN)</dt><dd th:text="${app.maskedTaxId}">**-***----</dd>
+        <dt>Equipment</dt><dd th:text="${app.equipmentDescription}">-</dd>
+        <dt>Lease amount</dt><dd th:text="${'$' + #numbers.formatDecimal(app.amount, 1, 2)}">-</dd>
+        <dt>Submitted</dt><dd th:text="${#temporals.format(app.createdAt, 'yyyy-MM-dd HH:mm:ss')}">-</dd>
+        <dt>Last updated</dt><dd th:text="${#temporals.format(app.updatedAt, 'yyyy-MM-dd HH:mm:ss')}">-</dd>
+    </dl>
+
+    <form id="retryForm" th:if="${app.status == T(com.clicklease.app.domain.ApplicationStatus).PENDING}"
+          th:action="@{/applications/{id}/retry(id=${app.id})}" method="post">
+        <button id="retryBtn" type="submit">Retry decision (calls credit bureau again)</button>
+        <div id="loading"><span class="spinner"></span>Contacting credit bureau…</div>
+    </form>
+</main>
+<script>
+    var f = document.getElementById('retryForm');
+    if (f) {
+        f.addEventListener('submit', function () {
+            document.getElementById('retryBtn').disabled = true;
+            document.getElementById('loading').style.display = 'block';
+        });
+    }
+</script>
+</body>
+</html>
