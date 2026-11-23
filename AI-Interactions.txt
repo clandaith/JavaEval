@@ -173,7 +173,10 @@ QUESTIONS ASKED IN CHAT (answers recorded when received):
   a. GitHub repo URL (or approve installing/authenticating gh CLI)?
      ANSWER: https://github.com/clandaith/JavaEval
   b. For PROCESS.md, which Troy will write: roughly how long did this take?
+     ANSWER: Under 1 hour.
   c. What (if anything) did you write or fix by hand?
+     ANSWER: Nothing — all agent. (Troy's role was direction + review; all
+     code changes were AI-generated.)
 
 --------------------------------------------------------------------------------
 ENTRY 6 — GitHub push
