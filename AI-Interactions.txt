@@ -135,4 +135,43 @@ AGENT ACTIONS:
 PENDING FOR TROY: GitHub repo creation/push, PROCESS.md personal sections,
 2-5 min demo video (show app incl. a bureau failure + retry).
 
+--------------------------------------------------------------------------------
+ENTRY 5 — Corrections: PROCESS.md ownership, GitHub, rules file, test audit
+--------------------------------------------------------------------------------
+
+USER REQUEST (verbatim):
+"First off, you're not to write into PROCESS.md.  I am to fill that in on my
+own without your help.  So any questions you have in there you need to ask me
+here in the chat window and record in the AI-Interactions.txt file.
+1. I've already given you the answer on this on.  You are to ask me questions
+here and not in the PROCESS.md file.
+2. Yes, push to github
+3. I will do this.   [re: video]
+4. Yes, copy that to the repo.   [re: global rules file]
+Also remember that I need you to record all our interactions in the
+AI-Interactions.txt file.
+I want you to double check all your unit tests to verify that they are
+correct and you didn't miss anything."
+
+AGENT ACTIONS:
+- Removed agent-drafted PROCESS.md (git rm, committed) — Troy authors it
+  himself. The placeholder questions are asked in chat instead (see below).
+- Copied ~/.codeium/windsurf/memories/global_rules.md into repo root as
+  global_rules.md; committed (PRD item 4: AI setup files).
+- GitHub push: `gh` CLI not installed, no git remote configured — repo URL
+  requested from Troy (see questions below).
+- Test audit vs PRD — gaps found and fixed:
+    * retry-decision path had no automated test (was only curl-verified):
+      added RetryDecisionIT with @MockitoBean BureauClient — pending->retry->
+      APPROVED (2 calls), and decided-app retry -> no additional bureau call.
+    * added detail-page EIN masking + retry-button visibility assertions,
+      status-filter test, createdAt/updatedAt assertions.
+    * fixed a sloppy assertEquals(true, ...) -> assertTrue.
+- Re-ran suite: 32 tests, 0 failures. Committed.
+
+QUESTIONS ASKED IN CHAT (answers recorded when received):
+  a. GitHub repo URL (or approve installing/authenticating gh CLI)?
+  b. For PROCESS.md, which Troy will write: roughly how long did this take?
+  c. What (if anything) did you write or fix by hand?
+
 
