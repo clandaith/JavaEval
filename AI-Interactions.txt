@@ -374,3 +374,17 @@ AGENT ACTIONS:
   pendingReasonIsHumanReadable (no technical noise, mentions Retry).
 - User then asked whether to log the Q&A; confirmed logging all
   interactions and appended this entry.
+
+--------------------------------------------------------------------------------
+ENTRY 15 — Committed PROCESS.md + PRD PDF
+--------------------------------------------------------------------------------
+
+USER REQUEST (verbatim):
+"Commit all changes and new files."
+
+AGENT ACTIONS:
+- git status showed two untracked files: PROCESS.md (Troy's hand-written
+  process doc — committed WITHOUT [ai] tag since it is human-authored) and
+  the PRD PDF (previously left untracked; user said "all", so included).
+- Committed as "docs: PROCESS.md (hand-written) + PRD requirements PDF"
+  (139a24e), pushed to origin/main.
