@@ -410,3 +410,23 @@ AGENT ACTIONS:
   form re-rendered, zero rows saved.
 - Fixed stale README test count (36 -> 82; had drifted at the 75 mark).
 - RESULT: mvn test -> 82 tests, 0 failures, 0 skipped.
+
+--------------------------------------------------------------------------------
+ENTRY 17 — Pushed demo video (GitHub size-limit workaround)
+--------------------------------------------------------------------------------
+
+USER REQUEST (verbatim):
+"Push the ScreenRecording.mov"
+
+AGENT ACTIONS:
+- ScreenRecording.mov was 117MB / 1080p — over GitHub's 100MB hard limit;
+  no ffmpeg or git-lfs installed. Re-encoded to 960x540 H.264 via macOS
+  built-in avconvert -> 72MB.
+- Push initially rejected: Troy's own earlier commit ("Added video",
+  4bd20c8) had put the 117MB blob into unpushed history alongside the
+  72MB replacement commit.
+- Fixed by squashing the two unpushed commits (git reset --soft) into a
+  single commit containing only the 72MB file. Original 1080p master kept
+  on disk untracked as ScreenRecording-original-1080p.mov.
+- RESULT: pushed as ScreenRecording.mov (71.5MB — accepted with a >50MB
+  warning).
