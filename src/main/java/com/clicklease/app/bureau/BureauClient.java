@@ -8,9 +8,7 @@ import org.springframework.boot.web.server.context.WebServerApplicationContext;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.util.UriUtils;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 /**
@@ -37,12 +35,12 @@ public class BureauClient {
 
     public int fetchScore(String taxId) {
         String url = "http://localhost:" + webServerContext.getWebServer().getPort()
-                + "/mock/bureau/score?taxId="
-                + UriUtils.encode(taxId, StandardCharsets.UTF_8);
+                + "/mock/bureau/score";
         logger.info("DEBUG MSG: Calling credit bureau for taxId={}", TaxIdMasker.mask(taxId));
         try {
-            ScoreResponse response = restClient.get()
+            ScoreResponse response = restClient.post()
                     .uri(url)
+                    .body(new MockCreditBureauController.ScoreRequest(taxId))
                     .retrieve()
                     .body(ScoreResponse.class);
             if (response == null) {

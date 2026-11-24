@@ -61,7 +61,7 @@ public class ApplicationService {
      */
     public LeaseApplication retryDecision(Long id) {
         LeaseApplication application = repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("No application with id " + id));
+                .orElseThrow(() -> new ApplicationNotFoundException(id));
         if (application.getStatus() != ApplicationStatus.PENDING) {
             logger.info("DEBUG MSG: Retry requested for application id={} with status={} — "
                     + "only PENDING applications may be retried", id, application.getStatus());
@@ -81,7 +81,7 @@ public class ApplicationService {
 
     public LeaseApplication getById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("No application with id " + id));
+                .orElseThrow(() -> new ApplicationNotFoundException(id));
     }
 
     private void applyDecision(LeaseApplication application) {

@@ -85,6 +85,30 @@ class ApplicationFormWebIT {
     }
 
     @Test
+    void unknownApplicationIdReturns404() {
+        var response = restTemplate.getForEntity("/applications/999999", String.class);
+        assertEquals(404, response.getStatusCode().value());
+    }
+
+    @Test
+    void listIsOrderedNewestFirst() {
+        repository.save(new LeaseApplication(UUID.randomUUID().toString(),
+                "Older Biz", "A", "a@x.io", "11-1111111", "Eq", new BigDecimal("5000")));
+        try {
+            Thread.sleep(10); // timestamps are ms-precision — keep ordering deterministic
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        repository.save(new LeaseApplication(UUID.randomUUID().toString(),
+                "Newer Biz", "B", "b@x.io", "22-2222222", "Eq", new BigDecimal("5000")));
+
+        String body = restTemplate.getForObject("/applications", String.class);
+
+        assertTrue(body.indexOf("Newer Biz") < body.indexOf("Older Biz"),
+                "newest application must be listed first");
+    }
+
+    @Test
     void statusFilterShowsOnlyMatchingApplications() {
         repository.save(new LeaseApplication(UUID.randomUUID().toString(),
                 "Pending Biz", "A", "a@x.io", "11-1111111", "Eq", new BigDecimal("5000")));

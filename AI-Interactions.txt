@@ -216,4 +216,45 @@ AGENT ACTIONS:
   is the designed UX.
 - mvn test -> 33 tests, 0 failures. App restarted with the fix.
 
+--------------------------------------------------------------------------------
+ENTRY 8 — PRD re-review (gap analysis) + fixes  [LOGGED LATE — see Entry 9]
+--------------------------------------------------------------------------------
+
+USER REQUEST (verbatim):
+"Now, with all the work you've done, I want you to review the requirements
+again, Clicklease Take-Home Mini Lease Application (PRD).pdf, and find things
+that you have missed."
+
+AGENT ACTIONS:
+- Re-read PRD and audited the build. Gaps found:
+    1. EIN traveled in bureau request URL query string -> moved endpoint to
+       POST /mock/bureau/score with JSON body (ScoreRequest record).
+    2. Bureau call counter was in-memory, reset on restart -> new
+       bureau_stats table (BureauStats entity + repository);
+       BureauCallRegistry now persists each call.
+    3. Unknown application id -> generic 500; now ApplicationNotFoundException
+       with @ResponseStatus(404).
+    4. No automated test for newest-first ordering -> added.
+- Also flagged (not code): PRD wants "unedited" AI session export (this log
+  is verbatim requests + summaries — Troy may add a transcript export);
+  PROCESS.md and video still owned by Troy.
+- Added tests per standing rules: newest-first ordering (with 10ms gap —
+  SQLite stores epoch-ms timestamps), 404 check, BureauCallRegistryIT
+  (DB-backed count + cost math), and existing tests still valid.
+- RESOLVED: BureauCallRegistryIT context failure — it used MOCK env where
+  WebServerApplicationContext bean is absent; fixed with RANDOM_PORT.
+- mvn test -> 36 tests, 0 failures. App restarted; live check confirmed
+  POST /mock/bureau/score works (deterministic 775, no EIN in URL) and the
+  call count now persists in the bureau_stats table across restarts.
+
+--------------------------------------------------------------------------------
+ENTRY 9 — Logging lapse acknowledged
+--------------------------------------------------------------------------------
+
+USER MESSAGE (verbatim):
+"Why didn't you add this interactions to the AI-Interactions.txt file?"
+
+AGENT RESPONSE: Acknowledged — Entry 8 was written retroactively to catch the
+log up. Going forward, logging each exchange as it happens.
+
 
