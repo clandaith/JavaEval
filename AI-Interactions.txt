@@ -388,3 +388,25 @@ AGENT ACTIONS:
   the PRD PDF (previously left untracked; user said "all", so included).
 - Committed as "docs: PROCESS.md (hand-written) + PRD requirements PDF"
   (139a24e), pushed to origin/main.
+
+--------------------------------------------------------------------------------
+ENTRY 16 — Failure-path test coverage
+--------------------------------------------------------------------------------
+
+USER REQUEST (verbatim):
+"Have you created failure unit tests or have you only created happy path
+tests?  If you only have happy path tests, write failure tests."
+
+AGENT ACTIONS:
+- Audited existing suite: real failure coverage already present (bureau
+  503/timeout -> PENDING, 28 validation cases, declined decisions, 404s,
+  duplicate/race submits, masker edge cases). Identified 7 missing
+  failure paths and added them — no production code changes:
+  MockBureauEndpointIT: null taxId -> 500 AND still billed (documents
+  vendor-bills-every-call behavior; recordCall fires before scoring);
+  missing request body -> 400; GET on POST-only score endpoint -> 405.
+  ApplicationFormWebIT: ?status=BOGUS -> 400; /applications/abc -> 400;
+  /applications/abc/retry -> 400; amount=not-a-number -> binding error,
+  form re-rendered, zero rows saved.
+- Fixed stale README test count (36 -> 82; had drifted at the 75 mark).
+- RESULT: mvn test -> 82 tests, 0 failures, 0 skipped.

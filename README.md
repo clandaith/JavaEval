@@ -32,10 +32,12 @@ the Applications list (filterable by status), open a detail page, and use
 mvn test
 ```
 
-36 tests — covers the three required cases (decision boundaries 649/650 and
+82 tests — covers the three required cases (decision boundaries 649/650 and
 25,000/25,001, bureau failure **and** timeout → Pending, duplicate submission →
 single bureau call) plus retry behavior, EIN masking, bureau score determinism,
-inline form validation, newest-first ordering, and 404 handling.
+inline form validation, newest-first ordering, 404 handling, concurrent
+same-key submissions (single billed call), and failure paths (malformed bureau
+requests, invalid status filter, non-numeric ids, binding errors).
 
 ## Mock credit bureau
 

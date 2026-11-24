@@ -70,4 +70,34 @@ class MockBureauEndpointIT {
         assertEquals(0, new BigDecimal("1.50").compareTo(costPerCall));
         assertEquals(costPerCall.multiply(BigDecimal.valueOf(calls)), totalCost);
     }
+
+    // ---- failure paths ----
+
+    @Test
+    void nullTaxIdFailsAndIsStillBilled() {
+        // Vendors bill every call they receive — even a malformed one.
+        long before = registry.getCallCount();
+
+        var response = restTemplate.postForEntity("/mock/bureau/score",
+                new MockCreditBureauController.ScoreRequest(null), String.class);
+
+        assertTrue(response.getStatusCode().is5xxServerError(),
+                "null taxId should error, got " + response.getStatusCode());
+        assertEquals(before + 1, registry.getCallCount(),
+                "malformed call still reached the vendor, so it is billed");
+    }
+
+    @Test
+    void missingRequestBodyReturns400() {
+        var response = restTemplate.postForEntity("/mock/bureau/score", null, String.class);
+        assertEquals(400, response.getStatusCode().value());
+    }
+
+    @Test
+    void scoreEndpointRejectsGet() {
+        // Tax IDs must travel in a POST body — GET is disabled by design so
+        // an EIN can never appear in a URL/access log.
+        var response = restTemplate.getForEntity("/mock/bureau/score", String.class);
+        assertEquals(405, response.getStatusCode().value());
+    }
 }

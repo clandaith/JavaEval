@@ -145,4 +145,49 @@ class ApplicationFormWebIT {
         assertTrue(body.contains("Pending Biz"));
         assertFalse(body.contains("Approved Biz"));
     }
+
+    // ---- failure paths ----
+
+    @Test
+    void invalidStatusFilterReturns400() {
+        var response = restTemplate.getForEntity("/applications?status=BOGUS", String.class);
+        assertEquals(400, response.getStatusCode().value());
+    }
+
+    @Test
+    void nonNumericApplicationIdReturns400() {
+        var response = restTemplate.getForEntity("/applications/abc", String.class);
+        assertEquals(400, response.getStatusCode().value());
+    }
+
+    @Test
+    void nonNumericRetryIdReturns400() {
+        var response = restTemplate.postForEntity("/applications/abc/retry", null, String.class);
+        assertEquals(400, response.getStatusCode().value());
+    }
+
+    @Test
+    void nonNumericAmountRerendersFormAndSavesNothing() {
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("idempotencyKey", "bad-amount-" + UUID.randomUUID());
+        form.add("businessName", "Valid Biz");
+        form.add("ownerName", "Ann Owner");
+        form.add("email", "ann@x.io");
+        form.add("taxId", "12-3456789");
+        form.add("equipmentDescription", "Lathe");
+        form.add("amount", "not-a-number");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        long rowsBefore = repository.count();
+        var response = restTemplate.postForEntity("/applications",
+                new HttpEntity<>(form, headers), String.class);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(rowsBefore, repository.count(),
+                "type-mismatch must not persist a row");
+        assertTrue(response.getBody().contains("idempotencyKey"),
+                "form should re-render with errors");
+    }
 }
