@@ -327,4 +327,30 @@ AGENT ACTIONS (test files only — no production code touched):
   Test left @Disabled with the defect documented + suggested fix
   (key-scoped lock + catch JpaSystemException/DataAccessException).
 
+--------------------------------------------------------------------------------
+ENTRY 13 — Race defect fixed
+--------------------------------------------------------------------------------
+
+USER REQUEST (verbatim):
+"Write a test for the defect, fix the defect, and then run all unit tests
+again."
+
+AGENT ACTIONS:
+- Enabled ConcurrentSubmissionIT (removed @Disabled); simplified it — two
+  same-key submits released simultaneously must return the same row and one
+  paid bureau call.
+- Fixed ApplicationService.submit(): dedupe check + bureau call + save now
+  run inside a key-striped lock (64 stripes, bounded — no per-key state).
+  A concurrent resubmit of the same key waits, then sees the winner's
+  committed row and returns it without billing the bureau.
+- Broadened saveIdempotently catch: DataIntegrityViolationException ->
+  DataAccessException (SQLite reports UNIQUE violations as
+  JpaSystemException; the parent type covers it). Kept as last-line defense
+  in case other writers ever exist.
+- Debug detour: IDE auto-compiled ApplicationService mid-edit leaving a
+  stale broken .class; mvn clean test resolved it.
+- Verified: timeout-path "octet-stream" extraction message is RestClient's
+  label for a response aborted mid-read — expected, not a regression.
+- RESULT: mvn clean test -> 75 tests, 0 failures, 0 skipped.
+
 

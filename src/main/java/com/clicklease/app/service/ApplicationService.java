@@ -9,9 +9,10 @@ import com.clicklease.app.util.TaxIdMasker;
 import com.clicklease.app.web.ApplicationForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,6 +20,14 @@ import java.util.UUID;
 public class ApplicationService {
 
     private static final Logger logger = LoggerFactory.getLogger(ApplicationService.class);
+
+    /**
+     * Striped locks keyed on idempotency key: a concurrent resubmit of the
+     * same key waits for the winner instead of double-billing the bureau.
+     * Bounded to a fixed stripe count so no per-key state accumulates.
+     */
+    private static final int SUBMIT_LOCK_STRIPES = 64;
+    private final Object[] submitLocks = new Object[SUBMIT_LOCK_STRIPES];
 
     private final LeaseApplicationRepository repository;
     private final BureauClient bureauClient;
@@ -30,6 +39,7 @@ public class ApplicationService {
         this.repository = repository;
         this.bureauClient = bureauClient;
         this.decisionService = decisionService;
+        Arrays.setAll(submitLocks, i -> new Object());
     }
 
     /**
@@ -41,18 +51,24 @@ public class ApplicationService {
                 ? UUID.randomUUID().toString()
                 : form.getIdempotencyKey();
 
-        var existing = repository.findByIdempotencyKey(key);
-        if (existing.isPresent()) {
-            logger.info("DEBUG MSG: Duplicate submission for key={} — returning existing "
-                    + "application id={} without calling the bureau", key, existing.get().getId());
-            return existing.get();
-        }
+        synchronized (lockFor(key)) {
+            var existing = repository.findByIdempotencyKey(key);
+            if (existing.isPresent()) {
+                logger.info("DEBUG MSG: Duplicate submission for key={} — returning existing "
+                        + "application id={} without calling the bureau", key, existing.get().getId());
+                return existing.get();
+            }
 
-        LeaseApplication application = new LeaseApplication(
-                key, form.getBusinessName(), form.getOwnerName(), form.getEmail(),
-                form.getTaxId(), form.getEquipmentDescription(), form.getAmount());
-        applyDecision(application);
-        return saveIdempotently(application, key);
+            LeaseApplication application = new LeaseApplication(
+                    key, form.getBusinessName(), form.getOwnerName(), form.getEmail(),
+                    form.getTaxId(), form.getEquipmentDescription(), form.getAmount());
+            applyDecision(application);
+            return saveIdempotently(application, key);
+        }
+    }
+
+    private Object lockFor(String key) {
+        return submitLocks[Math.floorMod(key.hashCode(), SUBMIT_LOCK_STRIPES)];
     }
 
     /**
@@ -105,8 +121,10 @@ public class ApplicationService {
             logger.info("DEBUG MSG: Saved application id={} status={} for taxId={}",
                     saved.getId(), saved.getStatus(), TaxIdMasker.mask(saved.getTaxId()));
             return saved;
-        } catch (DataIntegrityViolationException e) {
-            // Concurrent duplicate submission raced us — return the winner's row.
+        } catch (DataAccessException e) {
+            // Last line of defense: a unique-constraint violation means a duplicate
+            // won the insert race (SQLite reports this as JpaSystemException, not
+            // DataIntegrityViolationException) — return the winner's row.
             logger.info("DEBUG MSG: Concurrent duplicate for key={} — returning existing row", key);
             return repository.findByIdempotencyKey(key).orElseThrow(() -> e);
         }
