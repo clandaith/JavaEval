@@ -257,4 +257,24 @@ USER MESSAGE (verbatim):
 AGENT RESPONSE: Acknowledged — Entry 8 was written retroactively to catch the
 log up. Going forward, logging each exchange as it happens.
 
+--------------------------------------------------------------------------------
+ENTRY 10 — Stop app + README review
+--------------------------------------------------------------------------------
+
+USER REQUEST (verbatim):
+"Stop the app.  I'm going to launch it myself following your README.md file
+to make sure it is correct.  You might want to look at the README first to
+make sure it is up to date."
+
+AGENT ACTIONS:
+- Stopped the running app (port 8080 free).
+- Reviewed README.md — found stale content:
+    * "28 tests" -> corrected to 36
+    * bureau endpoint documented as GET /score?taxId= -> corrected to POST
+      with JSON body (EIN-in-URL fix from Entry 8)
+    * added Prerequisites section (JDK 25, Maven 3.9+)
+    * noted bureau call count now persists in bureau_stats table
+- Verified run commands unchanged and correct: `mvn spring-boot:run`,
+  `mvn test`.
+
 

@@ -10,6 +10,11 @@ to SQLite.
 - Thymeleaf server-rendered frontend
 - Spring Data JPA + SQLite (`xerial` JDBC + `hibernate-community-dialects`)
 
+## Prerequisites
+
+- JDK 25 (`java -version`)
+- Maven 3.9+ (`mvn -version`)
+
 ## Run the app
 
 ```bash
@@ -27,19 +32,22 @@ the Applications list (filterable by status), open a detail page, and use
 mvn test
 ```
 
-28 tests — covers the three required cases (decision boundaries 649/650 and
+36 tests — covers the three required cases (decision boundaries 649/650 and
 25,000/25,001, bureau failure **and** timeout → Pending, duplicate submission →
-single bureau call) plus EIN masking, bureau score determinism, and inline
-form validation.
+single bureau call) plus retry behavior, EIN masking, bureau score determinism,
+inline form validation, newest-first ordering, and 404 handling.
 
 ## Mock credit bureau
 
-`GET /mock/bureau/score?taxId=XX-XXXXXXX` lives inside the same app and is
-called over real HTTP by `BureauClient` (2s read timeout). It returns a
-deterministic score 300–850 per tax ID after a random 200 ms–3 s delay, fails
-~20% of the time, and counts every call at $1.50 — see `GET /mock/bureau/stats`
-or the footer of the Applications page. Behavior is tunable via the
-`bureau.*` properties in `src/main/resources/application.properties`.
+`POST /mock/bureau/score` lives inside the same app and is called over real
+HTTP by `BureauClient` (2s read timeout). The tax ID travels in a JSON body —
+`{"taxId": "XX-XXXXXXX"}` — never in a URL that could reach an access log. It
+returns a deterministic score 300–850 per tax ID after a random 200 ms–3 s
+delay, fails ~20% of the time, and counts every call at $1.50 — see
+`GET /mock/bureau/stats` or the footer of the Applications page. The count is
+persisted in the `bureau_stats` table, so the vendor cost survives restarts.
+Behavior is tunable via the `bureau.*` properties in
+`src/main/resources/application.properties`.
 
 ## Notes
 
