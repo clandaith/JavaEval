@@ -354,3 +354,23 @@ AGENT ACTIONS:
 - RESULT: mvn clean test -> 75 tests, 0 failures, 0 skipped.
 
 
+
+--------------------------------------------------------------------------------
+ENTRY 14 — Test-coverage Q&A (Section 3 decision rules)
+--------------------------------------------------------------------------------
+
+USER REQUEST (verbatim):
+"In the requirements, Clicklease Take-Home Mini Lease Application (PRD).pdf,
+there is section 3. It's about the decision rules. What unit test covers
+this?"
+
+AGENT ACTIONS:
+- Answered in chat only — no code changes: DecisionServiceTest covers
+  Section 3. The parameterized decisionRulesAtBoundaries test maps all 18
+  cases to the rules: score>=650 & amount<=25000 -> APPROVED; score>=700 &
+  amount>25000 -> APPROVED; else DECLINED. Exact boundaries tested:
+  649/650, 25000/25000.01/25001, 699/700. Companion tests:
+  decisionIncludesReason (reason contains score) and
+  pendingReasonIsHumanReadable (no technical noise, mentions Retry).
+- User then asked whether to log the Q&A; confirmed logging all
+  interactions and appended this entry.
