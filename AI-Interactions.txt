@@ -288,4 +288,43 @@ unpushed; `git push` -> "Everything up-to-date". All work was already on
 GitHub (github.com:clandaith/JavaEval). PRD PDF remains intentionally
 untracked.
 
+--------------------------------------------------------------------------------
+ENTRY 12 — Test-coverage audit (test files only, no prod code changes)
+--------------------------------------------------------------------------------
+
+USER REQUEST (verbatim):
+"It looks like you're missing a lot of unit tests.  Review the requirements
+again and the code.  Create unit tests for the missing sections.  During this
+iteration you are NOT allowed to change code.  Just create unit tests."
+
+AGENT ACTIONS (test files only — no production code touched):
+- Audited code vs PRD. Added coverage:
+    * ApplicationFormValidationTest (28 cases): every field rule — blanks,
+      email formats, 7 malformed EIN shapes, amount bounds 499.99/500/
+      50000/50000.01.
+    * MockBureauEndpointIT: POST determinism over HTTP, per-call billing,
+      /stats consistency.
+    * SubmissionDecisionIT: DECLINED persists score+reason; blank/missing
+      idempotency key auto-generates.
+    * IdempotentSubmissionIT: same-key-different-data dedupes; different
+      keys are separate billable submissions.
+    * ApplicationFormWebIT: form mints fresh hidden key per render;
+      retry on unknown id -> 404.
+    * TaxIdMaskerTest: exactly-4-digit + empty input edges.
+    * ConcurrentSubmissionIT: forces a true race on one key.
+- Test-infra fix (src/test/resources only): SQLite test DB now unique per
+  context (${random.uuid} in JDBC url) — shared file caused PRIMARY KEY
+  collisions between concurrently-cached contexts.
+- RESULT: 75 tests, 0 failures, 1 skipped.
+
+!!! DEFECT FOUND (test-only constraint prevented a fix) !!!
+  ConcurrentSubmissionIT proved check-then-act idempotency races: two
+  concurrent submits of the SAME key both call the PAID bureau endpoint
+  (PRD: never twice for one submission), and the loser's insert throws
+  JpaSystemException — SQLite reports UNIQUE violations as
+  JpaSystemException, NOT DataIntegrityViolationException, so the
+  saveIdempotently catch never fires -> HTTP 500 instead of dedupe.
+  Test left @Disabled with the defect documented + suggested fix
+  (key-scoped lock + catch JpaSystemException/DataAccessException).
+
 

@@ -56,10 +56,11 @@ class ApplicationFormWebIT {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
+        long rowsBefore = repository.count();
         String body = restTemplate.postForObject("/applications",
                 new HttpEntity<>(form, headers), String.class);
 
-        assertEquals(0, repository.count());
+        assertEquals(rowsBefore, repository.count());
         assertTrue(body.contains("Business name is required")
                 || body.contains("required"), "expected inline validation errors");
         assertTrue(body.contains("XX-XXXXXXX"), "expected EIN format error");
@@ -82,6 +83,27 @@ class ApplicationFormWebIT {
         assertFalse(body.contains("12-3456789"), "full EIN must never render");
         assertTrue(body.contains("**-***6789"), "expected masked EIN");
         assertTrue(body.contains("Retry decision"), "PENDING detail must offer retry");
+    }
+
+    @Test
+    void formRendersFreshIdempotencyKey() {
+        String first = restTemplate.getForObject("/", String.class);
+        String second = restTemplate.getForObject("/", String.class);
+
+        java.util.regex.Pattern keyPattern =
+                java.util.regex.Pattern.compile("name=\"idempotencyKey\" value=\"([0-9a-f-]{36})\"");
+        var m1 = keyPattern.matcher(first);
+        var m2 = keyPattern.matcher(second);
+        assertTrue(m1.find(), "form must carry a hidden idempotency key");
+        assertTrue(m2.find(), "form must carry a hidden idempotency key");
+        assertFalse(m1.group(1).equals(m2.group(1)),
+                "each form render should mint a new key");
+    }
+
+    @Test
+    void retryOnUnknownApplicationReturns404() {
+        var response = restTemplate.postForEntity("/applications/999999/retry", null, String.class);
+        assertEquals(404, response.getStatusCode().value());
     }
 
     @Test

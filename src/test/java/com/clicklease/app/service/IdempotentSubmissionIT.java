@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Required test #3: submitting the same application twice (double click /
@@ -34,6 +35,8 @@ class IdempotentSubmissionIT {
 
     @Test
     void duplicateSubmissionCallsBureauOnlyOnce() {
+        long callsBefore = registry.getCallCount();
+        long rowsBefore = repository.count();
         var form = TestFixtures.validForm("idempotency-key-abc-123");
 
         LeaseApplication first = applicationService.submit(form);
@@ -41,7 +44,36 @@ class IdempotentSubmissionIT {
 
         assertEquals(first.getId(), second.getId());
         assertEquals(first.getStatus(), second.getStatus());
-        assertEquals(1, registry.getCallCount(), "bureau must not be billed twice");
-        assertEquals(1, repository.count(), "only one row may be persisted");
+        assertEquals(callsBefore + 1, registry.getCallCount(), "bureau must not be billed twice");
+        assertEquals(rowsBefore + 1, repository.count(), "only one row may be persisted");
+    }
+
+    @Test
+    void sameKeyWithDifferentDataStillDeduplicates() {
+        long callsBefore = registry.getCallCount();
+        var first = TestFixtures.validForm("shared-key");
+        var second = TestFixtures.validForm("shared-key");
+        second.setBusinessName("Totally Different Corp");
+        second.setAmount(new java.math.BigDecimal("49000"));
+
+        LeaseApplication a = applicationService.submit(first);
+        LeaseApplication b = applicationService.submit(second);
+
+        assertEquals(a.getId(), b.getId());
+        assertEquals("Acme Widgets LLC", b.getBusinessName(),
+                "first write wins — dedupe is on the key, not the content");
+        assertEquals(callsBefore + 1, registry.getCallCount());
+    }
+
+    @Test
+    void differentKeysAreSeparateBillableSubmissions() {
+        long callsBefore = registry.getCallCount();
+
+        applicationService.submit(TestFixtures.validForm("key-one"));
+        applicationService.submit(TestFixtures.validForm("key-two"));
+
+        assertEquals(callsBefore + 2, registry.getCallCount());
+        assertTrue(repository.findByIdempotencyKey("key-one").isPresent());
+        assertTrue(repository.findByIdempotencyKey("key-two").isPresent());
     }
 }

@@ -23,4 +23,10 @@ class TaxIdMaskerTest {
         assertEquals("**-***----", TaxIdMasker.mask(null));
         assertEquals("**-***----", TaxIdMasker.mask("12"));
     }
+
+    @Test
+    void handlesExactlyFourDigitsAndEmpty() {
+        assertEquals("**-***1234", TaxIdMasker.mask("1234"));
+        assertEquals("**-***----", TaxIdMasker.mask(""));
+    }
 }
