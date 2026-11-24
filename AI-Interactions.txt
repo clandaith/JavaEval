@@ -430,3 +430,17 @@ AGENT ACTIONS:
   on disk untracked as ScreenRecording-original-1080p.mov.
 - RESULT: pushed as ScreenRecording.mov (71.5MB — accepted with a >50MB
   warning).
+
+--------------------------------------------------------------------------------
+ENTRY 18 — 1080p video master kept local
+--------------------------------------------------------------------------------
+
+USER REQUEST (verbatim):
+"Push the new video to the repo"
+
+AGENT ACTIONS:
+- Only un-pushed video was the 117MB 1080p master — over GitHub's 100MB
+  limit; 72MB ScreenRecording.mov already on GitHub.
+- Asked Troy how to handle it; he chose: leave the original local only.
+- Added ScreenRecording-original-1080p.mov to .gitignore so it can't be
+  accidentally committed again.
